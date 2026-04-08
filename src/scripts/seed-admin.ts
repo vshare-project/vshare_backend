@@ -21,7 +21,7 @@ const seedAdmin = async () => {
   try {
     await AppDataSource.initialize();
     Logger.info('📦 Database connected for seeding...')
-    const adminEmail = 'admin@ridex.com';
+    const adminEmail = 'admin@vshare.com';
     const existingAdmin = await User.findOneBy({ email: adminEmail });
     if (existingAdmin) {
       Logger.info('⚠️ Admin account already exists.')

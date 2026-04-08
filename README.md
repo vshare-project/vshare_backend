@@ -20,5 +20,6 @@ Hệ thống Backend cho dự án RideX - Nền tảng cho thuê xe điện (xe 
 npm install
 ## 3. Chạy Seeder :
 npm run seed:admin
+npm run seed:station
 npm run seed:vehicle
 

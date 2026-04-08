@@ -25,7 +25,6 @@ export enum VehicleStatus {
 }
 
 @Entity('vehicles')
-@Index(['vehicleCode'], { unique: true })
 @Index(['stationId', 'status'])
 export class Vehicle extends CustomBaseEntity {
   @Column({ unique: true })

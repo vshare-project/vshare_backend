@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
-import { Vehicle, VehicleType, VehicleStatus } from '@/entities';
+import { Vehicle, VehicleType, VehicleStatus, Station } from '@/entities';
 import { CarDetails, TransmissionType, DriveMode } from '@/entities/car_details.entity';
 import { MotorbikeDetails, MotorbikeType } from '@/entities/motorbike_details.entity';
 import Logger from '@/utils/logger';
@@ -520,6 +520,14 @@ const seedVehicles = async () => {
     let created = 0;
     let skipped = 0;
 
+    const stations = await Station.find();
+    if (stations.length === 0) {
+      Logger.warn('⚠️ Không có trạm nào trong DB! Các xe sẽ không được gắn vào trạm. Hãy chạy "npm run seed:station" trước nếu muốn xe có trạm.');
+    }
+
+    // Hàm random trạm
+    const getRandomStation = () => stations.length > 0 ? stations[Math.floor(Math.random() * stations.length)] : null;
+
     // ─── Seed Cars ───────────────────────────────────────────────────────────
     for (const data of carData) {
       const { carDetails: carDetailsData, ...vehicleData } = data;
@@ -530,14 +538,18 @@ const seedVehicles = async () => {
         continue;
       }
 
+      const randomStation = getRandomStation();
       const carDetails = AppDataSource.getRepository(CarDetails).create(carDetailsData);
       const vehicle = Vehicle.create({
         ...vehicleData,
         vehicleType: VehicleType.CAR,
+        stationId: randomStation?.id,
+        currentLat: randomStation ? randomStation.latitude : vehicleData.currentLat,
+        currentLong: randomStation ? randomStation.longitude : vehicleData.currentLong,
         carDetails,
       }) as Vehicle;
       await Vehicle.save(vehicle);
-      Logger.info(`✅ Created car: ${vehicleData.vehicleCode} (${vehicleData.brand} ${vehicleData.model})`);
+      Logger.info(`✅ Created car: ${vehicleData.vehicleCode} (${vehicleData.brand} ${vehicleData.model}) ${randomStation ? `at Station: ${randomStation.stationName}` : ''}`);
       created++;
     }
 
@@ -551,14 +563,18 @@ const seedVehicles = async () => {
         continue;
       }
 
+      const randomStation = getRandomStation();
       const motorbikeDetails = AppDataSource.getRepository(MotorbikeDetails).create(motorbikeDetailsData);
       const vehicle = Vehicle.create({
         ...vehicleData,
         vehicleType: VehicleType.MOTORBIKE,
+        stationId: randomStation?.id,
+        currentLat: randomStation ? randomStation.latitude : vehicleData.currentLat,
+        currentLong: randomStation ? randomStation.longitude : vehicleData.currentLong,
         motorbikeDetails,
       }) as Vehicle;
       await Vehicle.save(vehicle);
-      Logger.info(`✅ Created motorbike: ${vehicleData.vehicleCode} (${vehicleData.brand} ${vehicleData.model})`);
+      Logger.info(`✅ Created motorbike: ${vehicleData.vehicleCode} (${vehicleData.brand} ${vehicleData.model}) ${randomStation ? `at Station: ${randomStation.stationName}` : ''}`);
       created++;
     }
 
