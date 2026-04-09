@@ -36,8 +36,7 @@ export class StationService {
     const whereConditon = keyword
       ? [
         { stationName: Like(`%${keyword}%`) },
-        { address: Like(`%${keyword}%`) },
-        { universityName: Like(`%${keyword}%`) }
+        { address: Like(`%${keyword}%`) }
       ]
       : {};
     const [data, total] = await Station.findAndCount({

@@ -37,13 +37,13 @@ export class CreateStationDto {
   @Min(0, { message: 'Số chỗ khả dụng phải lớn hơn hoặc bằng 0!' })
   availableSlots!: number;
 
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-
-  @IsOptional()
-  @IsString()
-  universityName?: string;
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean({ message: 'isActive phải là kiểu boolean' })
+  isActive!: boolean;
 
   @IsOptional()
   @IsEnum(StationType, { message: 'Loại trạm không hợp lệ!' })
@@ -56,15 +56,15 @@ export class CreateStationDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, {
-    message: 'Giờ đóng cửa phải có định dạng HH:MM:SS!'
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, {
+    message: 'Giờ đóng cửa phải có định dạng HH:MM hoặc HH:MM:SS!'
   })
   closeTime?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, {
-    message: 'Giờ mở cửa phải có định dạng HH:MM:SS!'
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, {
+    message: 'Giờ mở cửa phải có định dạng HH:MM hoặc HH:MM:SS!'
   })
   openTime?: string;
 }
@@ -104,13 +104,14 @@ export class UpdateStationDto {
   @Min(0)
   availableSlots?: number;
 
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean({ message: 'isActive phải là kiểu boolean' })
+  isActive!: boolean;
 
-  @IsOptional()
-  @IsString()
-  universityName?: string;
 
   @IsOptional()
   @IsEnum(StationType)
@@ -123,11 +124,15 @@ export class UpdateStationDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, {
+    message: 'Giờ đóng cửa phải có định dạng HH:MM hoặc HH:MM:SS!'
+  })
   closeTime?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, {
+    message: 'Giờ mở cửa phải có định dạng HH:MM hoặc HH:MM:SS!'
+  })
   openTime?: string;
 }
