@@ -1,10 +1,10 @@
-import { CustomBaseEntity } from "@/utils/base.entity";
-import { Column, Entity, In, JoinColumn, ManyToOne, Index } from "typeorm";
-import { User } from "./user.entity";
-import { Vehicle } from "./vehicle.entity";
-import { Station } from "./station.entity";
-import { Voucher } from "./voucher.entity";
-import { Subscription } from "./subscription.entity";
+import { CustomBaseEntity } from '@/utils/base.entity';
+import { Column, Entity, JoinColumn, ManyToOne, Index } from 'typeorm';
+import { User } from './user.entity';
+import { Vehicle } from './vehicle.entity';
+import { Station } from './station.entity';
+import { Voucher } from './voucher.entity';
+import { Subscription } from './subscription.entity';
 
 export enum RentalStatus {
   ACTIVE = 'active',
@@ -13,8 +13,16 @@ export enum RentalStatus {
 }
 
 export enum RentalPaymentType {
-  PAY_PER_USE = 'pay_per_use',      // Trả theo chuyến
-  SUBSCRIPTION = 'subscription',     // Dùng vé tháng
+  PAY_PER_USE = 'pay_per_use',
+  SUBSCRIPTION = 'subscription',
+}
+
+// ─── THÊM MỚI ─────────────────────────────────────────────────────────────────
+export enum RentalPaymentStatus {
+  UNPAID = 'unpaid',       // Chưa thanh toán (active rental)
+  PAID = 'paid',           // Đã thanh toán
+  FAILED = 'failed',       // Thanh toán thất bại
+  FREE = 'free',           // Miễn phí (dùng subscription hoặc voucher 100%)
 }
 
 @Entity('rentals')
@@ -53,6 +61,15 @@ export class Rental extends CustomBaseEntity {
   })
   paymentType!: RentalPaymentType;
 
+  // ─── THÊM MỚI: trạng thái thanh toán ─────────────────────────────────────
+  @Column({
+    type: 'enum',
+    enum: RentalPaymentStatus,
+    default: RentalPaymentStatus.UNPAID,
+  })
+  paymentStatus!: RentalPaymentStatus;
+  // ──────────────────────────────────────────────────────────────────────────
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   totalCost!: number;
 
@@ -63,21 +80,21 @@ export class Rental extends CustomBaseEntity {
   discount!: number;
 
   @Column({ nullable: true })
-  ratingStars!: number; // điểm đánh giá
+  ratingStars?: number;
 
   @Column({ nullable: true })
-  ratingComment!: string;
+  ratingComment?: string;
 
   @Column({ type: 'int', default: 0 })
-  greenPointsEarned!: number; // điểm xanh kiếm dc trong ngày
+  greenPointsEarned!: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   distance?: number;
 
   @Column({ nullable: true })
-  subscriptionId?: string;
+  subscriptionId?: number;
 
-  @ManyToOne(() => Subscription)
+  @ManyToOne(() => Subscription, { nullable: true })
   @JoinColumn({ name: 'subscriptionId' })
   subscription?: Subscription;
 
@@ -93,12 +110,11 @@ export class Rental extends CustomBaseEntity {
   @JoinColumn({ name: 'startStationId' })
   startStation!: Station;
 
-  @ManyToOne(() => Station)
+  @ManyToOne(() => Station, { nullable: true })
   @JoinColumn({ name: 'endStationId' })
   endStation?: Station;
 
   @ManyToOne(() => Voucher, { nullable: true })
   @JoinColumn({ name: 'voucherId' })
   voucher?: Voucher;
-
-}  
+}

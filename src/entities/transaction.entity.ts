@@ -1,37 +1,43 @@
-import { CustomBaseEntity } from "@/utils/base.entity";
-import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
-import { User } from "./user.entity";
-import { Rental } from "./rental.entity";
+import { CustomBaseEntity } from '@/utils/base.entity';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { User } from './user.entity';
+import { Rental } from './rental.entity';
 
 export enum TransactionType {
-  PAYMENT = 'payment',
-  TOPUP = 'top_up',
-  REFUND = 'refund',
-  REWARD = 'reward',
-  PENALTY = 'penalty',
+  TOPUP = 'topup',               // Nạp tiền vào ví
+  RENTAL_PAYMENT = 'rental_payment', // Thanh toán chuyến đi
+  REFUND = 'refund',             // Hoàn tiền
+  SUBSCRIPTION_PAYMENT = 'subscription_payment', // Mua gói tháng
+  REWARD = 'reward',             // Thưởng điểm/hoàn tiền
 }
 
 export enum TransactionStatus {
   PENDING = 'pending',
-  COMPLETED = 'completed',
+  SUCCESS = 'success',
   FAILED = 'failed',
+  REFUNDED = 'refunded',
+}
+
+export enum PaymentMethod {
+  VNPAY = 'vnpay',
+  WALLET = 'wallet',       // Trừ từ ví nội bộ
+  SUBSCRIPTION = 'subscription', // Trừ từ gói tháng
 }
 
 @Entity('transactions')
-@Index(['userId', 'createdAt'])
+@Index(['userId', 'status'])
+@Index(['userId', 'type'])
+@Index(['vnpayTxnRef'], { unique: true, where: '"vnpayTxnRef" IS NOT NULL' })
 export class Transaction extends CustomBaseEntity {
-  @Column({})
-  userId!: string;
+  @Column()
+  userId!: number;
 
   @Column({ nullable: true })
-  rentalId?: string;
-
-  @Column({ type: 'decimal', precision: 12, scale: 2 })
-  amount!: number;
+  rentalId?: number;
 
   @Column({
     type: 'enum',
-    enum: TransactionType
+    enum: TransactionType,
   })
   type!: TransactionType;
 
@@ -42,30 +48,45 @@ export class Transaction extends CustomBaseEntity {
   })
   status!: TransactionStatus;
 
+  @Column({
+    type: 'enum',
+    enum: PaymentMethod,
+  })
+  paymentMethod!: PaymentMethod;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2 })
+  amount!: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  balanceBefore!: number; // Số dư ví trước giao dịch
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  balanceAfter!: number;  // Số dư ví sau giao dịch
+
+  // ─── VNPay fields ─────────────────────────────────────────────────────────
+  @Column({ nullable: true })
+  vnpayTxnRef?: string; // Mã giao dịch gửi sang VNPay (unique)
+
+  @Column({ nullable: true })
+  vnpayTransactionNo?: string; // Mã giao dịch VNPay trả về
+
+  @Column({ nullable: true })
+  vnpayBankCode?: string; // Ngân hàng thanh toán
+
+  @Column({ nullable: true })
+  vnpayResponseCode?: string; // Mã phản hồi từ VNPay
+
   @Column({ type: 'text', nullable: true })
-  description!: string;
+  vnpayRawResponse?: string; // Lưu toàn bộ response raw để audit
 
   @Column({ nullable: true })
-  paymentGateway!: string; // Ví dụ: 'Stripe', 'PayPal', 'momo'
-
-  @Column({ nullable: true })
-  externalTransactionId?: string; // ID giao dịch từ cổng thanh toán bên thứ ba
-
-  @Column({ type: 'json', nullable: true })
-  metadata?: {
-    voucherCode?: string;
-    voucherDiscount?: number;
-    greenPoints?: number;
-    gatewayResponse?: any;
-    [key: string]: any;
-  }
+  description?: string; // Mô tả giao dịch hiển thị cho user
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user!: User;
 
-  @ManyToOne(() => Rental)
+  @ManyToOne(() => Rental, { nullable: true })
   @JoinColumn({ name: 'rentalId' })
   rental?: Rental;
-
 }

@@ -57,6 +57,9 @@ export class Vehicle extends CustomBaseEntity {
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   rangeKm?: number; // Phạm vi hoạt động (km trên 1 lần sạc đầy)
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  totalKm!: number;
+
   @Column({
     type: 'enum',
     enum: VehicleStatus,

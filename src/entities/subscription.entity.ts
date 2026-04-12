@@ -1,29 +1,31 @@
-import { CustomBaseEntity } from "@/utils/base.entity";
-import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
-import { User,  } from "./user.entity";
-import { SubscriptionPlan } from "./subscriptionplan.entity";
-
+import { CustomBaseEntity } from '@/utils/base.entity';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { User } from './user.entity';
+import { SubscriptionPlan } from './subscriptionplan.entity';
 
 export enum SubscriptionStatus {
   ACTIVE = 'active',
   EXPIRED = 'expired',
   CANCELLED = 'cancelled',
-  PENDING = 'pending',
 }
 
+/**
+ * Instance gói đăng ký của một user cụ thể.
+ * Khi user mua gói → tạo 1 record Subscription từ SubscriptionPlan.
+ */
 @Entity('subscriptions')
 @Index(['userId', 'status'])
 export class Subscription extends CustomBaseEntity {
   @Column()
-  userId!: string;
+  userId!: number;
 
   @Column()
-  planId!: string;
+  planId!: number;
 
   @Column({
     type: 'enum',
     enum: SubscriptionStatus,
-    default: SubscriptionStatus.ACTIVE
+    default: SubscriptionStatus.ACTIVE,
   })
   status!: SubscriptionStatus;
 
@@ -34,7 +36,13 @@ export class Subscription extends CustomBaseEntity {
   endDate!: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  priceAtPurchase!: number;
+  pricePaid!: number; // Giá thực tế đã thanh toán (có thể khác giá gốc nếu có khuyến mãi)
+
+  @Column({ type: 'int', default: 0 })
+  ridesUsedToday!: number; // Số chuyến đã dùng hôm nay
+
+  @Column({ type: 'date', nullable: true })
+  lastRideDate?: Date; // Ngày dùng chuyến cuối → reset ridesUsedToday
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })

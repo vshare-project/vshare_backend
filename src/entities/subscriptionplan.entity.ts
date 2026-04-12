@@ -1,23 +1,26 @@
-import { CustomBaseEntity } from "@/utils/base.entity";
-import { Column, Entity } from "typeorm";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { VehicleType } from './vehicle.entity';
+import { Subscription } from './subscription.entity';
 
-export enum SubscriptionType {
-  STUDENT = 'student',
-  BASIC = 'basic',
-  PREMIUM = 'premium',
-}
 
 @Entity('subscription_plans')
-export class SubscriptionPlan extends CustomBaseEntity {
+export class SubscriptionPlan extends BaseEntity {
+  @PrimaryGeneratedColumn()
+  id!: number;
+
   @Column()
   name!: string; 
 
-  @Column({
-    type: 'enum',
-    enum: SubscriptionType,
-    default: SubscriptionType.STUDENT
-  })
-  type!: SubscriptionType;
+  @Column({ type: 'text', nullable: true })
+  description?: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
@@ -25,12 +28,34 @@ export class SubscriptionPlan extends CustomBaseEntity {
   @Column()
   durationDays!: number; 
 
+  @Column({
+    type: 'enum',
+    enum: VehicleType,
+    nullable: true,
+  })
+  vehicleType?: VehicleType; 
+
+  @Column({ type: 'int', nullable: true })
+  maxRidesPerDay?: number; 
+
+  @Column({ type: 'int', nullable: true })
+  maxMinutesPerRide?: number; 
+
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discountValue!: number; 
+  discountPercent!: number; 
 
   @Column({ default: true })
   isActive!: boolean;
 
-  @Column({ type: 'text', nullable: true })
-  description?: string;
+  @Column({ type: 'simple-array', nullable: true })
+  features?: string[]; // Danh sách tính năng hiển thị
+
+  @OneToMany(() => Subscription, (s) => s.plan)
+  subscriptions!: Subscription[];
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

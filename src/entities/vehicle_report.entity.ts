@@ -1,68 +1,77 @@
-import { CustomBaseEntity } from "@/utils/base.entity";
-import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
-import { Vehicle } from "./vehicle.entity";
-import { User } from "./user.entity";
+import { CustomBaseEntity } from '@/utils/base.entity';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { User } from './user.entity';
+import { Vehicle } from './vehicle.entity';
 
-export enum ReportType {
-  DAMAGE = 'damage',           // Hỏng hóc chung
-  BATTERY = 'battery',          // Pin hết/yếu
-  ACCIDENT = 'accident',        // Tai nạn
-  MAINTENANCE = 'maintenance',  // Bảo trì định kỳ
+export enum VehicleReportStatus {
+  PENDING = 'pending',       // Chờ xử lý
+  IN_PROGRESS = 'in_progress', // Đang xử lý
+  RESOLVED = 'resolved',     // Đã giải quyết
+  DISMISSED = 'dismissed',   // Từ chối / không phải lỗi
 }
 
-export enum ReportStatus {
-  OPEN = 'open',
-  FIXING = 'fixing',
-  RESOLVED = 'resolved',
+export enum VehicleReportType {
+  BATTERY = 'battery',           // Pin hỏng / không sạc được
+  BRAKE = 'brake',               // Phanh lỗi
+  TIRE = 'tire',                 // Lốp xe
+  LOCK = 'lock',                 // Khóa xe lỗi
+  GPS = 'gps',                   // GPS lỗi
+  DISPLAY = 'display',           // Màn hình xe lỗi
+  BODY_DAMAGE = 'body_damage',   // Thân xe móp/trầy
+  OTHER = 'other',
 }
 
 @Entity('vehicle_reports')
 @Index(['vehicleId', 'status'])
+@Index(['reportedById'])
 export class VehicleReport extends CustomBaseEntity {
   @Column()
   vehicleId!: number;
 
-  @Column({
-    type: 'enum',
-    enum: ReportType,
-  })
-  type!: ReportType;
+  @Column()
+  reportedById!: number; // userId của người báo cáo
+
+  @Column({ nullable: true })
+  assignedToId?: number; // Staff được phân công xử lý
+
+  @Column({ nullable: true })
+  rentalId?: number; // Chuyến đang chạy khi phát hiện lỗi (nếu có)
 
   @Column({
     type: 'enum',
-    enum: ReportStatus,
-    default: ReportStatus.OPEN,
+    enum: VehicleReportType,
+    default: VehicleReportType.OTHER,
   })
-  status!: ReportStatus;
+  reportType!: VehicleReportType;
+
+  @Column({
+    type: 'enum',
+    enum: VehicleReportStatus,
+    default: VehicleReportStatus.PENDING,
+  })
+  status!: VehicleReportStatus;
 
   @Column({ type: 'text' })
   description!: string;
 
-  // OPTIONAL FIELDS
-  @Column({ nullable: true })
-  reportedBy?: string;
+  @Column({ type: 'simple-array', nullable: true })
+  imageUrls?: string[]; // Ảnh bằng chứng
 
-  @Column({ nullable: true })
-  rentalId?: string; // Nếu xảy ra trong rental
-
-  @Column({ nullable: true })
-  handledBy?: string; // Staff ID
+  @Column({ type: 'text', nullable: true })
+  staffNote?: string; // Ghi chú của staff sau khi xử lý
 
   @Column({ type: 'timestamp', nullable: true })
   resolvedAt?: Date;
-
-  @Column({ type: 'simple-array', nullable: true })
-  images?: string[];
 
   @ManyToOne(() => Vehicle)
   @JoinColumn({ name: 'vehicleId' })
   vehicle!: Vehicle;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'reportedBy' })
-  reporter?: User;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'reportedById' })
+  reportedBy!: User;
 
   @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'handledBy' })
-  handler?: User;
+  @JoinColumn({ name: 'assignedToId' })
+  assignedTo?: User;
 }

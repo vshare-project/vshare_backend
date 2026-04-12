@@ -34,6 +34,11 @@ export class Station extends BaseEntity {
   @Column({ default: true })
   isActive!: boolean;
 
+  @Column({ default: 0 })
+  totalChargingSlots!: number; // Tổng số cổng sạc
+ 
+  @Column({ default: 0 })
+  availableChargingSlots!: number; // Cổng sạc còn trống
 
   @Column({
     type: 'enum',
